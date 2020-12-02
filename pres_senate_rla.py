@@ -81,7 +81,7 @@ with open('1976-2018-senate.csv') as votes_file:
 
 with open('1976-2018-pres-senate-rla.csv', 'w') as rla_file:
     writer = csv.writer(rla_file)
-    writer.writerow(['year', 'state', 'simultaneous', 'margin', 'initial sample', 'total votes', 'overstatement tolerable', 'expected sample'])
+    writer.writerow(['year', 'state', 'simultaneous', 'margin', 'initial sample', 'total votes', 'overstatement tolerable', 'expected sample', 'est stop'])
     # from Start 2010b
     multiplier = 5.85
     for election_year in CombinedElections:
@@ -104,10 +104,22 @@ with open('1976-2018-pres-senate-rla.csv', 'w') as rla_file:
             initial_sample = math.ceil(initial_sample)
             overstatement = math.ceil(overstatement)
 
+            # From Gentle Intro RLA (Stark 2012), eq 1
+            two_over = election.total_votes() * .001 * 5
+            two_under = election.total_votes() * .001 * 4.4
+            one_over = election.total_votes() * .01
+            one_under = election.total_votes() * .01 * .6
+
+            est_stop = multiplier + 1.4 * (two_over+two_under+one_over+one_under)
+            est_stop /= election.diluted_margin()
+
             # upper bound -> assume full recount if initial sample if insufficient
-            expected = initial_sample if overstatement >= initial_sample else election.total_votes()
+            if election.simultaneous():
+                expected = initial_sample if overstatement >= initial_sample else election.total_votes()
+            else:
+                expected = min(max(est_stop, overstatement), election.total_votes())
     
-            writer.writerow([election.year, state, election.simultaneous(), election.diluted_margin(), initial_sample, election.total_votes(), overstatement, expected])
+            writer.writerow([election.year, state, election.simultaneous(), election.diluted_margin(), initial_sample, election.total_votes(), overstatement, expected, est_stop])
             
             expected_ballots += expected
             total_ballots += election.total_votes()
