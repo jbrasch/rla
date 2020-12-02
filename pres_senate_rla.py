@@ -15,6 +15,7 @@ class Election:
         elif candidate_votes > self.second_place:
             self.second_place = candidate_votes
     
+    # mu> 0
     def margin(self):
         if self.second_place == 0:
             return math.inf
@@ -35,7 +36,7 @@ class StateElection:
             return self.pres.total_votes if self.pres else self.senate.total_votes
         return max(self.senate.total_votes, self.pres.total_votes)
 
-    # mu
+    # mu > 0
     def diluted_margin(self):
         if self.simultaneous():
             if self.total_votes() == 0:
@@ -91,10 +92,7 @@ with open('1976-2018-pres-senate-rla.csv', 'w') as rla_file:
         for state, election in election_year.items():
             # initial sample size
             # how many errors can we tolerate? with constnats from Start 2010b
-            if election.diluted_margin() == 0:
-                initial_sample = election.total_votes()
-                overstatement = 0
-            elif election.diluted_margin() >= 1:
+            if election.diluted_margin() >= 1:
                 initial_sample = 0
                 overstatement = election.total_votes()
             else:
@@ -110,17 +108,24 @@ with open('1976-2018-pres-senate-rla.csv', 'w') as rla_file:
             one_over = election.total_votes() * .01
             one_under = election.total_votes() * .01 * .6
 
-            est_stop = multiplier + 1.4 * (two_over+two_under+one_over+one_under)
-            est_stop /= election.diluted_margin()
-
-            # upper bound -> assume full recount if initial sample if insufficient
-            if election.simultaneous():
-                expected = initial_sample if overstatement >= initial_sample else election.total_votes()
+            if election.diluted_margin() < 1:
+                est_stop = multiplier + 1.4 * sum([two_over, two_under, one_over, one_under])
+                est_stop = math.ceil(est_stop / election.diluted_margin())
             else:
-                expected = min(max(est_stop, overstatement), election.total_votes())
-    
+                est_stop = 0
+
+            if election.diluted_margin() < 1:
+                # upper bound -> assume full recount if initial sample if insufficient
+                if election.simultaneous():
+                    expected = initial_sample if overstatement >= initial_sample else election.total_votes()
+                # only one election being audited -> use Start 2012 equation
+                else:
+                    expected = min(max(est_stop, overstatement), election.total_votes())
+            else:
+                expected = 0
+
             writer.writerow([election.year, state, election.simultaneous(), election.diluted_margin(), initial_sample, election.total_votes(), overstatement, expected, est_stop])
-            
+
             expected_ballots += expected
             total_ballots += election.total_votes()
             year = election.year
