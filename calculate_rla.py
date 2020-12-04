@@ -89,10 +89,10 @@ def run_rla_simulation():
         arlo_house_std_csv.writeheader()
 
         for year in range(2016, 2020, 2):
-            row_total_avg, row_total_std = [year], [year]
-            row_pres_avg, row_pres_std = [year], [year]
-            row_senate_avg, row_senate_std = [year], [year]
-            row_house_avg, row_house_std = [year], [year]
+            row_total_avg, row_total_std = {'year': year}, {'year': year}
+            row_pres_avg, row_pres_std = {'year': year}, {'year': year}
+            row_senate_avg, row_senate_std = {'year': year}, {'year': year}
+            row_house_avg, row_house_std = {'year': year}, {'year': year}
             pres_year = False
             for state_po in state_pos:
                 print(year, state_po)
@@ -111,39 +111,40 @@ def run_rla_simulation():
                 if pres is not None:
                     pres_year = True
                     total.append(pres)
-                    row_pres_avg.append(np.average(pres))
-                    row_pres_std.append(np.std(pres))
+                    row_pres_avg[state_po] = np.average(pres)
+                    row_pres_std[state_po] = np.std(pres)
                 else:
-                    row_pres_avg.append("")
-                    row_pres_std.append("")
+                    row_pres_avg[state_po] = ""
+                    row_pres_std[state_po] = ""
 
                 if senate is not None:
                     total.append(senate)
-                    row_senate_avg.append(np.average(senate))
-                    row_senate_std.append(np.std(senate))
+                    row_senate_avg[state_po] = np.average(senate)
+                    row_senate_std[state_po] = np.std(senate)
                 else:
-                    row_pres_avg.append("")
-                    row_pres_std.append("")
+                    row_pres_avg[state_po] = ""
+                    row_pres_std[state_po] = ""
 
                 if house is not None:
                     total.append(house)
-                    row_house_avg.append(np.average(house))
-                    row_house_std.append(np.std(house))
+                    row_house_avg[state_po] = np.average(house)
+                    row_house_std[state_po] = np.std(house)
                 else:
-                    row_house_avg.append("")
-                    row_house_std.append("")
+                    row_house_avg[state_po] = ""
+                    row_house_std[state_po] = ""
 
                 if len(total) == 0:
-                    row_total_avg.append("")
-                    row_total_std.append("")
+                    row_total_avg[state_po] = ""
+                    row_total_std[state_po] = ""
                 else:
                     total = np.sum(total, axis=0)
-                    row_total_avg.append(np.average(total))
-                    row_total_std.append(np.std(total))
+                    row_total_avg[state_po] = np.average(total)
+                    row_total_std[state_po] = np.std(total)
             arlo_total_avg_csv.writerow(row_total_avg)
             arlo_total_std_csv.writerow(row_total_std)
-            arlo_pres_avg_csv.writerow(row_pres_avg)
-            arlo_pres_std_csv.writerow(row_pres_std)
+            if pres_year:
+                arlo_pres_avg_csv.writerow(row_pres_avg)
+                arlo_pres_std_csv.writerow(row_pres_std)
             arlo_senate_avg_csv.writerow(row_senate_avg)
             arlo_senate_std_csv.writerow(row_senate_std)
             arlo_house_avg_csv.writerow(row_house_avg)
