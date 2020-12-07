@@ -1,4 +1,4 @@
-from typing import Dict, Set
+from typing import Dict
 import csv
 
 from arlo.server.audit_math.sampler_contest import Contest
@@ -13,6 +13,15 @@ class StateElection:
 
 
 elections: Dict[int, Dict[str, StateElection]] = {}  # map from year -> map from states -> StateElection
+
+state_pos_dc = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'DC', 'FL', 'GA', 'HI', 'ID', 'IL', 'IN', 'IA', 'KS',
+                'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC',
+                'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY']
+
+for year in range(1976, 2020, 2):
+    elections[year] = {}
+    for state in state_pos_dc:
+        elections[year][state] = StateElection(year)
 
 with open('1976-2016-president-headers.csv') as votes_file:
     pres_contest_data: Dict[int, Dict[str, Dict[str, int]]] = {}
@@ -63,6 +72,8 @@ with open('1976-2018-senate-headers.csv') as votes_file:
         for state, contest_data in state_map.items():
             if state not in elections[year]:
                 elections[year][state] = StateElection(year)
+            if len(contest_data) == 4:  # only 1 candidate
+                continue
             contest_name = str(year) + '_' + state + '_senate'
             elections[year][state].senate = Contest(contest_name, contest_data)
 
@@ -79,7 +90,7 @@ with open('1976-2018-house-headers.csv') as votes_file:
         if not (row['runoff'] == 'FALSE' or row['runoff'] == 'NA'):
             continue
         # ignore uncontested elections
-        if row['totalvotes'] == '0' or row['totalvotes'] == 1:
+        if row['totalvotes'] == '0' or row['totalvotes'] == '1':
             continue
         year = int(row['year'])
         if year not in house_contest_data:
@@ -106,4 +117,6 @@ with open('1976-2018-house-headers.csv') as votes_file:
                 elections[year][state] = StateElection(year)
             for district, contest_data in district_map.items():
                 contest_name = str(year) + '_' + state + '_house_' + str(district)
+                if len(contest_data) == 4: # only 1 candidate
+                    continue
                 elections[year][state].house[district] = Contest(contest_name, contest_data)
