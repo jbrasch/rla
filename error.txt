@@ -1,0 +1,19 @@
+1976 TN
+[<class 'decimal.InvalidOperation'>]
+1976_TN_house_5
+{'CLIFFORD ALLEN': 125830, 'ROGER BISSELL': 10292, 'NA': 29}
+Traceback (most recent call last):
+  File "/home/jay/2020_Fall/498/rla/calculate_rla.py", line 191, in <module>
+    run_rla_simulation()
+  File "/home/jay/2020_Fall/498/rla/calculate_rla.py", line 139, in run_rla_simulation
+    raise e
+  File "/home/jay/2020_Fall/498/rla/calculate_rla.py", line 134, in run_rla_simulation
+    house.append(simulate_rla(contest))
+  File "/home/jay/2020_Fall/498/rla/calculate_rla.py", line 69, in simulate_rla
+    sample = bravo.get_sample_size(risk_limit, contest, arlo_sample_results)
+  File "/home/jay/2020_Fall/498/rla/arlo/server/audit_math/bravo.py", line 424, in get_sample_size
+    size = bravo_sample_sizes(alpha, p_w, p_l, sample_w, sample_l, quant)
+  File "/home/jay/2020_Fall/498/rla/arlo/server/audit_math/bravo.py", line 217, in bravo_sample_sizes
+    if test_stat > threshold:
+decimal.InvalidOperation: [<class 'decimal.InvalidOperation'>]
+Changing lines 205 and 207 to math.ceil in BRAVO fixes this error. Happens when the RLA is close to finished
