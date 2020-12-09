@@ -11,6 +11,16 @@ class StateElection:
         self.senate: Contest = None
         self.house: Dict[int, Contest] = {}  # maps from district to contest
 
+    def total_votes(self):
+        total = 0
+        if self.pres is not None:
+            total += self.pres.ballots
+        if self.senate is not None:
+            total += self.senate.ballots
+        for contest in self.house.values():
+            total += contest.ballots
+        return total
+
 
 elections: Dict[int, Dict[str, StateElection]] = {}  # map from year -> map from states -> StateElection
 
@@ -117,6 +127,6 @@ with open('1976-2018-house-headers.csv') as votes_file:
                 elections[year][state] = StateElection(year)
             for district, contest_data in district_map.items():
                 contest_name = str(year) + '_' + state + '_house_' + str(district)
-                if len(contest_data) == 4: # only 1 candidate
+                if len(contest_data) == 4:  # only 1 candidate
                     continue
                 elections[year][state].house[district] = Contest(contest_name, contest_data)

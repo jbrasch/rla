@@ -33,8 +33,6 @@ state_pos_dc = ['AL', 'AK', 'AZ', 'AR', 'CA', 'CO', 'CT', 'DE', 'DC', 'FL', 'GA'
                 'KY', 'LA', 'ME', 'MD', 'MA', 'MI', 'MN', 'MS', 'MO', 'MT', 'NE', 'NV', 'NH', 'NJ', 'NM', 'NY', 'NC',
                 'ND', 'OH', 'OK', 'OR', 'PA', 'RI', 'SC', 'SD', 'TN', 'TX', 'UT', 'VT', 'VA', 'WA', 'WV', 'WI', 'WY']
 iterations = 50
-risk_limit = 5
-
 
 # bravo code does a full recount under two conditions:
 # (1) if a sample size achieving a 90% chance of completing the RLA would take more than 25% of the total ballots
@@ -52,7 +50,7 @@ def select_candidate(contest: Contest, sample_results):
     return random.choices(candidates, weights=weights, k=1)[0]
 
 
-def simulate_rla(contest: Contest):
+def simulate_rla(contest: Contest, risk_limit):
     counts = []
     if 'all-ballots' in bravo.get_sample_size(risk_limit, contest, None):
         for i in range(0, iterations):
@@ -83,7 +81,7 @@ def simulate_rla(contest: Contest):
     return np.array(counts)
 
 
-def simulate_rla_individual(contest: Contest):
+def simulate_rla_individual(contest: Contest, risk_limit):
     counts = []
     if 'all-ballots' in bravo.get_sample_size(risk_limit, contest, None):
         for i in range(0, iterations):
@@ -113,15 +111,15 @@ def get_sample_count(sample, percent_f):
         return sample[percent_f]['size']
 
 
-def run_rla_sim_poll():
-    with open('arlo_results/arlo-ballot-poll-all-' + str(risk_limit) + '-avg.csv', 'w') as arlo_all_avg, \
-            open('arlo_results/arlo-ballot-poll-all-' + str(risk_limit) + '-std.csv', 'w') as arlo_all_std, \
-            open('arlo_results/arlo-ballot-poll-pres-' + str(risk_limit) + '-avg.csv', 'w') as arlo_pres_avg, \
-            open('arlo_results/arlo-ballot-poll-pres-' + str(risk_limit) + '-std.csv', 'w') as arlo_pres_std, \
-            open('arlo_results/arlo-ballot-poll-senate-' + str(risk_limit) + '-avg.csv', 'w') as arlo_senate_avg, \
-            open('arlo_results/arlo-ballot-poll-senate-' + str(risk_limit) + '-std.csv', 'w') as arlo_senate_std, \
-            open('arlo_results/arlo-ballot-poll-house-' + str(risk_limit) + '-avg.csv', 'w') as arlo_house_avg, \
-            open('arlo_results/arlo-ballot-poll-house-' + str(risk_limit) + '-std.csv', 'w') as arlo_house_std:
+def run_rla_sim_poll(risk_limit):
+    with open('arlo_results_poll_sim/batch/arlo-ballot-poll-all-' + str(risk_limit) + '-avg.csv', 'w') as arlo_all_avg, \
+            open('arlo_results_poll_sim/batch/arlo-ballot-poll-all-' + str(risk_limit) + '-std.csv', 'w') as arlo_all_std, \
+            open('arlo_results_poll_sim/batch/arlo-ballot-poll-pres-' + str(risk_limit) + '-avg.csv', 'w') as arlo_pres_avg, \
+            open('arlo_results_poll_sim/batch/arlo-ballot-poll-pres-' + str(risk_limit) + '-std.csv', 'w') as arlo_pres_std, \
+            open('arlo_results_poll_sim/batch/arlo-ballot-poll-senate-' + str(risk_limit) + '-avg.csv', 'w') as arlo_senate_avg, \
+            open('arlo_results_poll_sim/batch/arlo-ballot-poll-senate-' + str(risk_limit) + '-std.csv', 'w') as arlo_senate_std, \
+            open('arlo_results_poll_sim/batch/arlo-ballot-poll-house-' + str(risk_limit) + '-avg.csv', 'w') as arlo_house_avg, \
+            open('arlo_results_poll_sim/batch/arlo-ballot-poll-house-' + str(risk_limit) + '-std.csv', 'w') as arlo_house_std:
         all_indv_fieldnames = ['year', 'total'] + state_pos
         all_indv_fieldnames_dc = ['year', 'total'] + state_pos_dc
         arlo_all_avg_csv = csv.DictWriter(arlo_all_avg, fieldnames=all_indv_fieldnames_dc, restval=0)
@@ -157,17 +155,11 @@ def run_rla_sim_poll():
                     continue
                 election = elections[year][state_po]
                 assert pres_year == (election.pres is not None)
-                try:
-                    pres = None if election.pres is None else simulate_rla(election.pres)
-                    senate = None if election.senate is None else simulate_rla(election.senate)
-                    house = []
-                    for contest in election.house.values():
-                        house.append(simulate_rla(contest))
-                except Exception as e:
-                    print(e)
-                    print(contest.name)
-                    print(contest.candidates)
-                    raise e
+                pres = None if election.pres is None else simulate_rla(election.pres, risk_limit)
+                senate = None if election.senate is None else simulate_rla(election.senate, risk_limit)
+                house = []
+                for contest in election.house.values():
+                    house.append(simulate_rla(contest, risk_limit))
 
                 if len(house) == 0:
                     house = None
@@ -233,15 +225,15 @@ def run_rla_sim_poll():
             arlo_house_std.flush()
 
 
-def run_rla_sim_poll_indv():
-    with open('arlo_results/arlo-ballot-poll-all-indv-' + str(risk_limit) + '-avg.csv', 'w') as arlo_all_avg, \
-            open('arlo_results/arlo-ballot-poll-all-indv-' + str(risk_limit) + '-std.csv', 'w') as arlo_all_std, \
-            open('arlo_results/arlo-ballot-poll-pres-indv-' + str(risk_limit) + '-avg.csv', 'w') as arlo_pres_avg, \
-            open('arlo_results/arlo-ballot-poll-pres-indv-' + str(risk_limit) + '-std.csv', 'w') as arlo_pres_std, \
-            open('arlo_results/arlo-ballot-poll-senate-indv-' + str(risk_limit) + '-avg.csv', 'w') as arlo_senate_avg, \
-            open('arlo_results/arlo-ballot-poll-senate-indv-' + str(risk_limit) + '-std.csv', 'w') as arlo_senate_std, \
-            open('arlo_results/arlo-ballot-poll-house-indv-' + str(risk_limit) + '-avg.csv', 'w') as arlo_house_avg, \
-            open('arlo_results/arlo-ballot-poll-house-indv-' + str(risk_limit) + '-std.csv', 'w') as arlo_house_std:
+def run_rla_sim_poll_indv(risk_limit):
+    with open('arlo_results_poll_sim/indv/arlo-ballot-poll-all-' + str(risk_limit) + '-avg.csv', 'w') as arlo_all_avg, \
+            open('arlo_results_poll_sim/indv/arlo-ballot-poll-all-' + str(risk_limit) + '-std.csv', 'w') as arlo_all_std, \
+            open('arlo_results_poll_sim/indv/arlo-ballot-poll-pres-' + str(risk_limit) + '-avg.csv', 'w') as arlo_pres_avg, \
+            open('arlo_results_poll_sim/indv/arlo-ballot-poll-pres-' + str(risk_limit) + '-std.csv', 'w') as arlo_pres_std, \
+            open('arlo_results_poll_sim/indv/arlo-ballot-poll-senate-' + str(risk_limit) + '-avg.csv', 'w') as arlo_senate_avg, \
+            open('arlo_results_poll_sim/indv/arlo-ballot-poll-senate-' + str(risk_limit) + '-std.csv', 'w') as arlo_senate_std, \
+            open('arlo_results_poll_sim/indv/arlo-ballot-poll-house-' + str(risk_limit) + '-avg.csv', 'w') as arlo_house_avg, \
+            open('arlo_results_poll_sim/indv/arlo-ballot-poll-house-' + str(risk_limit) + '-std.csv', 'w') as arlo_house_std:
         all_indv_fieldnames = ['year', 'total'] + state_pos
         all_indv_fieldnames_dc = ['year', 'total'] + state_pos_dc
         arlo_all_avg_csv = csv.DictWriter(arlo_all_avg, fieldnames=all_indv_fieldnames_dc, restval=0)
@@ -277,17 +269,11 @@ def run_rla_sim_poll_indv():
                     continue
                 election = elections[year][state_po]
                 assert pres_year == (election.pres is not None)
-                try:
-                    pres = None if election.pres is None else simulate_rla(election.pres)
-                    senate = None if election.senate is None else simulate_rla(election.senate)
-                    house = []
-                    for contest in election.house.values():
-                        house.append(simulate_rla(contest))
-                except Exception as e:
-                    print(e)
-                    print(contest.name)
-                    print(contest.candidates)
-                    raise e
+                pres = None if election.pres is None else simulate_rla(election.pres, risk_limit)
+                senate = None if election.senate is None else simulate_rla(election.senate, risk_limit)
+                house = []
+                for contest in election.house.values():
+                    house.append(simulate_rla(contest, risk_limit))
 
                 if len(house) == 0:
                     house = None
@@ -353,7 +339,7 @@ def run_rla_sim_poll_indv():
             arlo_house_std.flush()
 
 
-def run_rla_poll_percent():
+def run_rla_poll_percent(risk_limit):
     for percent in [50, 75, 90]:
         percent_f = str(Decimal(percent) / Decimal(100))
         with open('arlo_results_poll_percent/arlo-ballot-poll-' + str(percent) + '-percent-all-' + str(
@@ -465,4 +451,20 @@ def run_rla_poll_percent():
 # print(sample)
 # print(sample['0.5'])
 
-run_rla_poll_percent()
+# run_rla_poll_percent()
+try:
+    run_rla_sim_poll_indv(5)
+except:
+    pass
+try:
+    run_rla_sim_poll_indv(10)
+except:
+    pass
+try:
+    run_rla_sim_poll(5)
+except:
+    pass
+try:
+    run_rla_sim_poll(10)
+except:
+    pass
