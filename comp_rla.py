@@ -29,7 +29,7 @@ def multiplier(risk_limit, inflator, tolerance):
     return math.log(1/risk_limit) / (a + tolerance * math.log(1-a))
 
 
-def comp_rla(election, risk_limit=0.5, inflator=1.1, tolerance=0.5):
+def comp_rla(election, risk_limit=0.1, inflator=1.1, tolerance=0.5):
 
     # tie
     if election.margin() <= 0:
@@ -64,13 +64,18 @@ def comp_rla(election, risk_limit=0.5, inflator=1.1, tolerance=0.5):
     return [margin, election.total_votes, initial_sample, expected]
 
 
-def simultaneous_rla(election1, election2, risk_limit=0.5, inflator=1.1, tolerance=0.1):
+def simultaneous_rla(election1, election2, risk_limit=0.1, inflator=1.1, tolerance=0.5):
+
+    def diluted_margin(election1, election2, total):
+        m_1 = election1.first_place - election1.second_place
+        m_2 = election2.first_place - election2.second_place
+        return min(m_1, m_2) / total
 
     mult = multiplier(risk_limit, inflator, tolerance)
-    margin = min(election1.margin(), election2.margin())
+    total_votes = max(election1.total_votes, election2.total_votes)
+    margin = diluted_margin(election1, election2, total_votes)
     initial_sample = math.ceil(mult / margin)
     expected = initial_sample
-    total_votes = max(election1.total_votes, election2.total_votes)
 
     # uncontested
     if margin >= 1:
