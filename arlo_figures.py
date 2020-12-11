@@ -183,87 +183,132 @@ def gen_figures():
 #     for row in house_csv:
 #         results[row['year']] = {}
 #         results[row['year']]['Year'] = row['year']
-#         results[row['year']]['House'] = row['total']
+#         results[row['year']]['House'] = "{:,}".format(int(row['total']))
 #     for row in senate_csv:
-#         results[row['year']]['Senate'] = row['total']
+#         results[row['year']]['Senate'] = "{:,}".format(int(row['total']))
 #     for row in pres_csv:
-#         results[row['year']]['President'] = row['total']
+#         results[row['year']]['President'] = "{:,}".format(int(row['total']))
 #     for row in all_csv:
-#         results[row['year']]['All'] = row['total']
+#         results[row['year']]['All'] = "{:,}".format(int(row['total']))
 #
 #     results_csv = csv.DictWriter(results_f, fieldnames=['Year', 'House', 'Senate', 'President', 'All'])
 #     results_csv.writeheader()
 #     for year in range(1976, 2020, 2):
 #         result =results[str(year)]
 #         results_csv.writerow(result)
-#
-#
-# with open('poll_rla.csv') as poll_f,\
-#     open('comp_rla.csv') as comp_f,\
-#     open('comp_vs_poll_rla.csv', 'w') as results_f:
-#     poll_csv = csv.DictReader(poll_f)
-#     comp_csv = csv.DictReader(comp_f)
-#     results = {}
-#     for row in poll_csv:
-#         results[row['Year']] = {}
-#         results[row['Year']]['Year'] = row['Year']
-#         results[row['Year']]['Ballot-Polling'] = row['All']
-#     for row in comp_csv:
-#         results[row['Year']]['Ballot-Comparison'] = row['All']
-#         if int(row['Year'])%4 == 0:
-#             senateppres = int(row['Senate']) + int(row['President'])
-#             senateCpres = int(row['President-Senate'])
-#             print(senateppres - senateCpres)
-#
-#     results_csv = csv.DictWriter(results_f, fieldnames=['Year', 'Ballot-Comparison', 'Ballot-Polling', 'Percent'])
-#     results_csv.writeheader()
-#     average_percent = 0
-#     n = 0
-#     for year in range(1976, 2020, 2):
-#         result = results[str(year)]
-#         poll = int(result['Ballot-Polling'])
-#         comp = int(result['Ballot-Comparison'])
-#         diff = poll-comp
-#         p = diff / comp * 100
-#         average_percent += p
-#         n+=1
-#         percent_increase = str(round(diff / comp * 100, 1)) + ' \%'
-#         # result['Difference'] = diff
-#         result['Percent'] = percent_increase
-#         results_csv.writerow(result)
-#     print(average_percent / n)
 
+
+with open('poll_rla_with_cost.csv') as poll_f, \
+        open('comp_rla.csv') as comp_f, \
+        open('comp_vs_poll_rla_comma.csv', 'w') as results_f:
+    poll_csv = csv.DictReader(poll_f)
+    comp_csv = csv.DictReader(comp_f)
+    results = {}
+    for row in poll_csv:
+        results[row['Year']] = {}
+        results[row['Year']]['Year'] = row['Year']
+        results[row['Year']]['Ballot-Polling'] = row['Total']
+    for row in comp_csv:
+        results[row['Year']]['Ballot-Comparison'] = row['Total']
+
+    results_csv = csv.DictWriter(results_f, fieldnames=['Year', 'Ballot-Comparison', 'Ballot-Polling', 'Percent'],delimiter=';')
+    results_csv.writeheader()
+    average_percent = 0
+    n = 0
+    for year in range(1976, 2020, 2):
+        result = results[str(year)]
+        poll = int(result['Ballot-Polling'])
+        comp = int(result['Ballot-Comparison'])
+        result['Ballot-Polling'] = "{:,}".format(poll)
+        result['Ballot-Comparison'] = "{:,}".format(comp)
+        diff = poll - comp
+        p = diff / comp * 100
+        average_percent += p
+        n += 1
+        percent_increase = str(round(diff / comp * 100, 1)) + ' \%'
+        # result['Difference'] = diff
+        result['Percent'] = percent_increase
+        results_csv.writerow(result)
+    print(average_percent / n)
 
 # with open('house_comp_rla.csv') as house_comp, open('pres')
 
 
-with open('state_comp_rla.csv') as state_totals_f:
-    state_totals_csv = csv.DictReader(state_totals_f)
-    state_totals_2016 = {}
-    total_2016 = 6312790
-    for row in state_totals_csv:
-        if row['year'] == str(2016):
-            # print(row)
-            state_totals_2016[row['state']] = row
-    outlier_total = int(state_totals_2016['CA']['pres & sen & house']) + int(state_totals_2016['MI']['pres & sen & house']) + int(state_totals_2016['NH']['pres & sen & house'])
-    print('CA', state_totals_2016['CA']['pres & sen & house'])
-    print('MI', state_totals_2016['MI']['pres & sen & house'])
-    print('NH', state_totals_2016['NH']['pres & sen & house'])
-    print('WI', state_totals_2016['WI']['pres & sen & house'])
-    print('PA', state_totals_2016['PA']['pres & sen & house'])
-    print(outlier_total / total_2016)
+# with open('state_comp_rla.csv') as state_totals_f:
+#     state_totals_csv = csv.DictReader(state_totals_f)
+#     state_totals_2016 = {}
+#     total_2016 = 6312790
+#     for row in state_totals_csv:
+#         if row['year'] == str(2016):
+#             # print(row)
+#             state_totals_2016[row['state']] = row
+#     outlier_total = int(state_totals_2016['CA']['pres & sen & house']) + int(state_totals_2016['MI']['pres & sen & house']) + int(state_totals_2016['NH']['pres & sen & house'])
+#     print('CA', state_totals_2016['CA']['pres & sen & house'])
+#     print('MI', state_totals_2016['MI']['pres & sen & house'])
+#     print('NH', state_totals_2016['NH']['pres & sen & house'])
+#     print('WI', state_totals_2016['WI']['pres & sen & house'])
+#     print('PA', state_totals_2016['PA']['pres & sen & house'])
+#     print(outlier_total / total_2016)
 
-with open('arlo_results_poll_sim/batch/arlo-ballot-poll-all-10-avg.csv') as all_f:
-    state_totals_csv = csv.DictReader(all_f)
-    state_totals_2016 = {}
-    for row in state_totals_csv:
-        if row['year'] == str(2016):
-            state_totals_2016 = row
-            break
-    outlier_total = int(state_totals_2016['CA']) + int(state_totals_2016['MI']) + int(state_totals_2016['NH'])
-    print('CA', state_totals_2016['CA'])
-    print('MI', state_totals_2016['MI'])
-    print('NH', state_totals_2016['NH'])
-    print('WI', state_totals_2016['WI'])
-    print('PA', state_totals_2016['PA'])
-    print(outlier_total / int(state_totals_2016['total']))
+# with open('arlo_results_poll_sim/batch/arlo-ballot-poll-all-10-avg.csv') as all_f:
+#     state_totals_csv = csv.DictReader(all_f)
+#     state_totals_2016 = {}
+#     for row in state_totals_csv:
+#         if row['year'] == str(2016):
+#             state_totals_2016 = row
+#             break
+#     outlier_total = int(state_totals_2016['CA']) + int(state_totals_2016['MI']) + int(state_totals_2016['NH'])
+#     print('CA', state_totals_2016['CA'])
+#     print('MI', state_totals_2016['MI'])
+#     print('NH', state_totals_2016['NH'])
+#     print('WI', state_totals_2016['WI'])
+#     print('PA', state_totals_2016['PA'])
+#     print(outlier_total / int(state_totals_2016['total']))
+
+with open('poll_rla_with_cost.csv') as input, open('poll_rla.csv', 'w') as output:
+    in_csv = csv.DictReader(input)
+    out_csv = csv.DictWriter(output, fieldnames=in_csv.fieldnames, delimiter=';')
+    out_csv.writeheader()
+    adjusted_headers = in_csv.fieldnames[1:5]
+    adjusted_costs = in_csv.fieldnames[5:]
+    for row in in_csv:
+        result = {'Year': row['Year']}
+        for h in adjusted_headers:
+            if '' != row[h]:
+                result[h] = "{:,}".format(int(row[h]))
+        for h in adjusted_costs:
+            if '' != row[h]:
+                result[h] = '\$' + "{:,}".format(int(row[h]))
+        out_csv.writerow(result)
+
+with open('comp_rla.csv') as input, open('comp_rla_comma.csv', 'w') as output:
+    in_csv = csv.DictReader(input)
+    out_csv = csv.DictWriter(output, fieldnames=in_csv.fieldnames, delimiter=';')
+    out_csv.writeheader()
+    adjusted_headers = in_csv.fieldnames[1:6]
+    adjusted_costs = in_csv.fieldnames[6:]
+    for row in in_csv:
+        result = {'Year': row['Year']}
+        for h in adjusted_headers:
+            if '' != row[h]:
+                result[h] = "{:,}".format(int(row[h]))
+        for h in adjusted_costs:
+            if '' != row[h]:
+                result[h] = '\$' + "{:,}".format(int(row[h]))
+        out_csv.writerow(result)
+
+# with open('comp_vs_poll_rla.csv') as input, open('comp_vs_poll_rla_comma.csv', 'w') as output:
+#     in_csv = csv.DictReader(input)
+#     out_csv = csv.DictWriter(output, fieldnames=in_csv.fieldnames, delimiter=';')
+#     out_csv.writeheader()
+#     adjusted_headers = in_csv.fieldnames[1:6]
+#     adjusted_costs = in_csv.fieldnames[6:]
+#     for row in in_csv:
+#         result = {'Year': row['Year']}
+#         for h in adjusted_headers:
+#             if '' != row[h]:
+#                 result[h] = "{:,}".format(int(row[h]))
+#         for h in adjusted_costs:
+#             if '' != row[h]:
+#                 result[h] = '\$' + "{:,}".format(int(row[h]))
+#         out_csv.writerow(result)
